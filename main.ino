@@ -8,10 +8,14 @@
   #include <ESP8266WiFi.h>
 #endif
 
-#include "arduino_secrets.h"
+//#include "arduino_secrets.h"
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
-char ssid[] = SECRET_SSID;        // your network SSID (name)
-char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "HAMKvisitor";        // your network SSID (name)
+char pass[] = "hamkvisitor";    // your network password (use for WPA, or use as key for WEP)
+
+int ledPin = 13;                // LED 
+int pirPin = 2;                 // PIR Out pin 
+int pirStat = 0;                   // PIR status
 
 // To connect with SSL/TLS:
 // 1) Change WiFiClient to WiFiSSLClient.
@@ -24,13 +28,13 @@ MqttClient mqttClient(wifiClient);
 
 const char broker[] = "iot.research.hamk.fi";
 int        port     = 1883;
-const char topic[]  = "annnna";
+const char topic[]  = "HAMK/VLK/students/306";
 
 const long interval = 10000;
 unsigned long previousMillis = 0;
 
 int count = 0;
-float fTemp, fHum;
+float fTemp, fHum, light_val;
 int t_attempt;
 int h_attempt;
 
@@ -41,6 +45,9 @@ DHT dht(DHT11Pin, DHT11);
 
 void setup() {
   //Initialize serial and wait for port to open:
+  pinMode(ledPin, OUTPUT);     
+  pinMode(pirPin, INPUT);     
+ 
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -95,24 +102,41 @@ void loop() {
     
     fTemp = dht.readTemperature();
     fHum = dht.readHumidity();
+    light_val=analogRead(0);
+    String pirStatMsg = "";
+
+    pirStat = digitalRead(pirPin); 
+    if (pirStat == HIGH) {            // if motion detected
+    //digitalWrite(ledPin, HIGH);  // turn LED ON
+    pirStatMsg = "Motion detected";
+    } 
+    else {
+    //digitalWrite(ledPin, LOW); // turn LED OFF if we have no motion
+    pirStatMsg = "No motion";
+    }
+
     
     Serial.print("Sending message to topic: ");
     Serial.println(topic);
     Serial.print(fTemp);
     Serial.print(";");
     Serial.println(fHum);
+    Serial.println(pirStat);
 
-    // send message, the Print interface can be used to set the message contents
-    //string = "\"temperature\": " + fTemp + ",\"humidity\": " + fHum;
+    
     mqttClient.beginMessage(topic);
-    //mqttClient.print(string);
-    //mqttClient.print("{'temperature':");
+    mqttClient.print("{\"temperature\": ");
     mqttClient.print(fTemp);
-    mqttClient.print(";");
-    //mqttClient.print(",'humidity':");
+    
+    mqttClient.print(",\"humidity\": ");
     mqttClient.print(fHum);
-    //mqttClient.print("}");
+    mqttClient.print(", \"light\": ");
+    mqttClient.print(light_val);
+    mqttClient.print(", \"motion status\": ");
+    mqttClient.print(pirStat);
+    mqttClient.print("}");
     mqttClient.endMessage();
+    
 
     Serial.println();
 
