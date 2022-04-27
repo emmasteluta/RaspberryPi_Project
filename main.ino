@@ -10,8 +10,8 @@
 
 //#include "arduino_secrets.h"
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
-char ssid[] = "HAMKvisitor";        // your network SSID (name)
-char pass[] = "hamkvisitor";    // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "";        // your network SSID (name)
+char pass[] = "";    // your network password (use for WPA, or use as key for WEP)
 
 int ledPin = 13;                // LED 
 int pirPin = 2;                 // PIR Out pin 
@@ -26,15 +26,15 @@ int pirStat = 0;                   // PIR status
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-const char broker[] = "iot.research.hamk.fi";
+const char broker[] = "iot.research.hamk.fi"; 
 int        port     = 1883;
-const char topic[]  = "HAMK/VLK/students/306";
+const char topic[]  = "HAMK/VLK/students/306"; //Topic of our device
 
 const long interval = 10000;
 unsigned long previousMillis = 0;
 
 int count = 0;
-float fTemp, fHum, light_val;
+float fTemp, fHum, light_val; //Sensor value variables
 int t_attempt;
 int h_attempt;
 
@@ -99,41 +99,60 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     // save the last time a message was sent
     previousMillis = currentMillis;
-    
+
+    //setting variables to read sensor data
     fTemp = dht.readTemperature();
     fHum = dht.readHumidity();
-    light_val=analogRead(0);
+    light_val= analogRead(0);
+
+    String light_stat = "";
+    if(light_val > 50)
+    {
+      light_stat = "off";
+    }
+    else
+    {
+      light_stat = "on";
+    }
+    
     String pirStatMsg = "";
 
     pirStat = digitalRead(pirPin); 
     if (pirStat == HIGH) {            // if motion detected
     //digitalWrite(ledPin, HIGH);  // turn LED ON
-    pirStatMsg = "Motion detected";
+    pirStatMsg = "present" ;
     } 
     else {
     //digitalWrite(ledPin, LOW); // turn LED OFF if we have no motion
-    pirStatMsg = "No motion";
+    pirStatMsg = "not present";
     }
 
-    
+    //printing data to serial monitor
     Serial.print("Sending message to topic: ");
     Serial.println(topic);
     Serial.print(fTemp);
     Serial.print(";");
     Serial.println(fHum);
     Serial.println(pirStat);
+    Serial.println(light_stat);
 
-    
+    //sending MQTT message
     mqttClient.beginMessage(topic);
     mqttClient.print("{\"temperature\": ");
     mqttClient.print(fTemp);
     
     mqttClient.print(",\"humidity\": ");
     mqttClient.print(fHum);
-    mqttClient.print(", \"light\": ");
+    mqttClient.print(", \"lightstatus\": ");
+    mqttClient.print("\"");
+    mqttClient.print(light_stat);
+    mqttClient.print("\"");
+    mqttClient.print(", \"brightness\": ");
     mqttClient.print(light_val);
-    mqttClient.print(", \"motion status\": ");
-    mqttClient.print(pirStat);
+    mqttClient.print(", \"presence\": ");
+    mqttClient.print("\"");
+    mqttClient.print(pirStatMsg);
+    mqttClient.print("\"");
     mqttClient.print("}");
     mqttClient.endMessage();
     
