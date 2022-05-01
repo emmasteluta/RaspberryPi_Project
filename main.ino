@@ -10,8 +10,8 @@
 
 //#include "arduino_secrets.h"
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
-char ssid[] = "";        // your network SSID (name)
-char pass[] = "";    // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "#Telia-6C573A";        // your network SSID (name)
+char pass[] = "Cu1TFaPmerepWZAk";    // your network password (use for WPA, or use as key for WEP)
 
 int ledPin = 13;                // LED 
 int pirPin = 2;                 // PIR Out pin 
@@ -127,6 +127,17 @@ void loop() {
     pirStatMsg = "not present";
     }
 
+    //Dynamic light control function
+    //Calculation based on ideal lighting for a class being 300 lux
+    float light_dim = (-0.33334*light_val) + 100;
+    float light_dim_send = light_dim;
+     if(light_dim<0)
+     {
+      light_dim_send = 0;
+      
+     }
+
+    
     //printing data to serial monitor
     Serial.print("Sending message to topic: ");
     Serial.println(topic);
@@ -135,6 +146,9 @@ void loop() {
     Serial.println(fHum);
     Serial.println(pirStat);
     Serial.println(light_stat);
+    Serial.println(light_val);
+    Serial.println(light_dim_send);
+  
 
     //sending MQTT message
     mqttClient.beginMessage(topic);
@@ -154,6 +168,8 @@ void loop() {
     mqttClient.print(pirStatMsg);
     mqttClient.print("\"");
     mqttClient.print("}");
+    mqttClient.print(",\"light bulb intensity value\": ");
+    mqttClient.print(light_dim_send);
     mqttClient.endMessage();
     
 
