@@ -127,6 +127,30 @@ void loop() {
     pirStatMsg = "not present";
     }
 
+    //Dynamic light control function
+    //Calculation based on ideal lighting for a class being 300 lux
+    float light_dim = (-0.33334*light_val) + 100;
+    float light_dim_send = light_dim;
+     if(light_dim<0)
+     {
+      light_dim_send = 0;
+      
+     }
+
+    
+    
+    String pirStatMsg = "";
+
+    pirStat = digitalRead(pirPin); 
+    if (pirStat == HIGH) {            // if motion detected
+    //digitalWrite(ledPin, HIGH);  // turn LED ON
+    pirStatMsg = "present" ;
+    } 
+    else {
+    //digitalWrite(ledPin, LOW); // turn LED OFF if we have no motion
+    pirStatMsg = "not present";
+    }
+
     //printing data to serial monitor
     Serial.print("Sending message to topic: ");
     Serial.println(topic);
@@ -135,6 +159,9 @@ void loop() {
     Serial.println(fHum);
     Serial.println(pirStat);
     Serial.println(light_stat);
+    Serial.println(light_val);
+    Serial.println(light_dim_send);
+  
 
     //sending MQTT message
     mqttClient.beginMessage(topic);
@@ -153,6 +180,8 @@ void loop() {
     mqttClient.print("\"");
     mqttClient.print(pirStatMsg);
     mqttClient.print("\"");
+    mqttClient.print(",\"light bulb intensity value\": ");
+    mqttClient.print(light_dim_send);
     mqttClient.print("}");
     mqttClient.endMessage();
     
