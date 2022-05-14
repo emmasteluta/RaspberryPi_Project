@@ -138,6 +138,19 @@ void loop() {
      }
 
     
+    
+    String pirStatMsg = "";
+
+    pirStat = digitalRead(pirPin); 
+    if (pirStat == HIGH) {            // if motion detected
+    //digitalWrite(ledPin, HIGH);  // turn LED ON
+    pirStatMsg = "present" ;
+    } 
+    else {
+    //digitalWrite(ledPin, LOW); // turn LED OFF if we have no motion
+    pirStatMsg = "not present";
+    }
+
     //printing data to serial monitor
     Serial.print("Sending message to topic: ");
     Serial.println(topic);
@@ -167,9 +180,9 @@ void loop() {
     mqttClient.print("\"");
     mqttClient.print(pirStatMsg);
     mqttClient.print("\"");
-    mqttClient.print("}");
     mqttClient.print(",\"light bulb intensity value\": ");
     mqttClient.print(light_dim_send);
+    mqttClient.print("}");
     mqttClient.endMessage();
     
 
